@@ -95,6 +95,18 @@ export async function handleGetLink(c: HonoContext): Promise<Response> {
     return c.json(link, { status: 200 })
 }
 
+/**
+ * Handles the retrieval of link access records.
+ *
+ * This function processes a request to get access records for a specific link key.
+ * It validates the provided key, ensuring it meets the required length, and then
+ * queries the database for access records associated with that key, ordered by
+ * the access time in descending order.
+ *
+ * @param c - The HonoContext object containing the request and environment details.
+ * @returns A Promise that resolves to a Response object containing the access records
+ *          or an error message if the request is invalid.
+ */
 export async function handleGetLinkAccess(c: HonoContext): Promise<Response> {
     const rawKey = c.req.param('key')
     if (!rawKey || rawKey.length < LINK_KEY_LENGTH) {
@@ -109,6 +121,18 @@ export async function handleGetLinkAccess(c: HonoContext): Promise<Response> {
     return c.json(accesses, { status: 200 })
 }
 
+/**
+ * Handles the deletion of a link based on the provided key.
+ * 
+ * @param c - The HonoContext object containing the request and environment.
+ * @returns A Promise that resolves to a Response object indicating the result of the deletion.
+ * 
+ * The function performs the following steps:
+ * 1. Extracts the 'key' parameter from the request.
+ * 2. Validates the 'key' to ensure it meets the required length.
+ * 3. Calls the `deleteLink` function to remove the link from the database.
+ * 4. Returns a JSON response indicating success or failure.
+ */
 export async function handleDeleteLink(c: HonoContext): Promise<Response> {
     const rawKey = c.req.param('key')
     if (!rawKey || rawKey.length < LINK_KEY_LENGTH) {
@@ -121,11 +145,25 @@ export async function handleDeleteLink(c: HonoContext): Promise<Response> {
     return c.json({ message: 'Link deleted' }, { status: 200 })
 }
 
+
+/**
+ * Handles the request to list links with optional query parameters for filtering, pagination, and sorting.
+ *
+ * @param {HonoContext} c - The context object containing the request and environment.
+ * @returns {Promise<Response>} - A promise that resolves to a Response object containing the list of links.
+ *
+ * Query Parameters:
+ * - `dest` (optional): A string to filter links by their destination.
+ * - `page` (optional): A number to specify the page of results to retrieve. Defaults to 1.
+ * - `num` (optional): A number to specify the number of results per page. Defaults to 20, with a maximum of 100.
+ * - `order_by` (optional): A string to specify the field to sort by. Can be 'created_at' or 'access_count'. Defaults to 'created_at'.
+ * - `order` (optional): A string to specify the sort order. Can be 'ASC' or 'DESC'. Defaults to 'DESC'.
+ */
 export async function handleListLinks(c: HonoContext): Promise<Response> {
     const dest = c.req.query('dest') || null
 
-    const created_before_raw = parseInt(c.req.query('created_before') || '')
-    const created_before = (!isNaN(created_before_raw) && created_before_raw > 0) ? created_before_raw : null
+    const page_raw = parseInt(c.req.query('page') || '')
+    const page = (!isNaN(page_raw) && page_raw > 0) ? page_raw : 1
 
     const num_raw = parseInt(c.req.query('num') || '')
     const num = (!isNaN(num_raw) && num_raw > 0 && num_raw < 100) ? num_raw : 20
@@ -143,14 +181,10 @@ export async function handleListLinks(c: HonoContext): Promise<Response> {
         query += ' WHERE destination LIKE ?'
         params.push(`%${dest}%`)
     }
-    if (created_before) {
-        query += dest ? ' AND' : ' WHERE'
-        query += ' created_at < ?'
-        params.push(created_before)
-    }
     query += ` ORDER BY ${order_by} ${order}`
-    query += ' LIMIT ?'
+    query += ` LIMIT ? OFFSET ?`
     params.push(num)
+    params.push((page - 1) * num)
 
     const links = await c.env.DB.prepare(query)
         .bind(...params)
