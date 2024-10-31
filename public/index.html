@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
+    <link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="vh-100">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        <div class="container">
+            <a class="navbar-brand" href="/">PasteBin</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/">Upload</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+            </div>
+        </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="mt-5 d-none">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header pt-3">
+                        <h5 class="card-title ">URL Shorten</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="container">
+                            <form>
+                                <div class="mb-3 input-group">
+                                    <input type="url" class="form-control" id="urlInput" placeholder="Enter URL here"
+                                        required>
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="urlExp" value="7" required>
+                                        <label class="form-check-label" for="shortUrl">
+                                            7 days
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="urlExp" value="30" required>
+                                        <label class="form-check-label" for="longUrl">
+                                            30 days
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="urlExp" value="0"
+                                            checked required>
+                                        <label class="form-check-label" for="urlExp">
+                                            forever
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header pt-3">
+                        <h5 class="card-title ">File Upload</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="container">
+                            <div class="mb-1">
+                                <label for="urlExp" class="form-label me-2">Expire in: </label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="fileExp" value="7" required>
+                                    <label class="form-check-label" for="urlExp">
+                                        7 days
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="fileExp" value="30" required>
+                                    <label class="form-check-label" for="fileExp">
+                                        30 days
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="fileExp" value="0" checked
+                                        required>
+                                    <label class="form-check-label" for="fileExp">
+                                        forever
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="actions" class="row">
+                                <div class="col-lg-7">
+                                    <!-- The fileinput-button span is used to style the file input field as button -->
+                                    <span class="btn btn-primary fileinput-button dz-clickable">
+                                        <i class="glyphicon glyphicon-plus"></i>
+                                        <span>Add files...</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div id="progress-bars">
+                                <div id="template" class="row mt-3 uploadstatus">
+                                    <hr>
+                                    <!-- This is used as the file preview template -->
+                                    <div class="col-2">
+                                        <span class="preview"><img data-dz-thumbnail /></span>
+                                        <p class="size" data-dz-size></p>
+                                    </div>
+                                    <div class="col-8">
+                                        <p class="name mb-2" data-dz-name></p>
+                                        <input type="url" class="fileurl form-control mb-1" disabled>
+                                        <input type="hidden" class="filekey">
+                                        <strong class="error text-danger" data-dz-errormessage></strong>
+                                        <div class="progress progress-striped active mt-2" role="progressbar"
+                                            aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                                            <div class="progress-bar progress-bar-success" style="width:0%;"
+                                                data-dz-uploadprogress></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-2">
+                                        <button class="btn mt-1 mb-3 btn-success copy" disabled>
+                                            <i class="glyphicon glyphicon-trash"></i>
+                                            <span>Copy</span>
+                                        </button>
+                                        <button data-dz-remove class="btn btn-danger delete" disabled>
+                                            <i class="glyphicon glyphicon-trash"></i>
+                                            <span>Delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- <div class="mb-3" id="template">
+                                    <label for="file1" class="form-label">File 1</label>
+                                    <div class="progress">
+                                        <div id="file1" class="progress-bar" role="progressbar" style="width: 0%;"
+                                            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    </div>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="/static/index.js"></script>
+
+    <script>
+        var previewNode = document.querySelector("#template");
+        previewNode.id = "";
+        var previewTemplate = previewNode.parentNode.innerHTML;
+        previewNode.parentNode.removeChild(previewNode);
+
+        var myDropzone = new Dropzone(document.body, { // Make the whole body a dropzone
+            url: () => {
+                // get exp
+                const exp = document.querySelector("input[name=fileExp]:checked").value;
+                return "/api/upload?d=" + exp;
+            }, // Set the url
+            thumbnailWidth: 80,
+            thumbnailHeight: 80,
+            parallelUploads: 20,
+            previewTemplate: previewTemplate,
+            autoQueue: true, // Make sure the files aren't queued until manually added
+            previewsContainer: "#progress-bars", // Define the container to display the previews
+            clickable: ".fileinput-button", // Define the element that should be used as click trigger to select files.
+        });
+
+        myDropzone.on("addedfile", function (file) {
+            // file.previewElement.querySelector(".start").onclick = function () { myDropzone.enqueueFile(file); };
+            // myDropzone.element.querySelectorAll(".dz-preview").forEach(function (preview) {
+            //     this.element.insertBefore(preview, myDropzone.element.firstChild);
+            // }.bind(this));
+        });
+
+        myDropzone.on("sending", function (file) {
+            // And disable the start button
+        });
+
+        myDropzone.on("success", function (file) {
+            file.previewElement.querySelector(".delete").removeAttribute("disabled");
+            file.previewElement.querySelector(".copy").removeAttribute("disabled");
+            file.previewElement.querySelector(".fileurl").value = file.xhr.responseText;
+            // parse response as url and set filekey
+            const url = new URL(file.xhr.responseText);
+            const key = url.pathname.split("/").pop();
+
+            file.previewElement.querySelector(".filekey").value = key;
+
+            file.previewElement.querySelector(".copy").addEventListener("click", function () {
+                var copyText = file.previewElement.querySelector(".fileurl");
+                copyText.select();
+                copyText.setSelectionRange(0, 99999);
+                document.execCommand("copy");
+            });
+        });
+
+        myDropzone.on("removedfile", function (file) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/api/delete/"+file.previewElement.querySelector(".filekey").value, true);
+            xhr.send();
+        });
+    </script>
+
+</body>
+
+</html>
