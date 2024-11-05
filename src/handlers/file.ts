@@ -93,6 +93,8 @@ export async function handleAccessFile(c: HonoContext): Promise<Response> {
         .run()
 
     await c.env.DB.prepare('UPDATE files SET access_count = access_count + 1 WHERE key = ?')
+        .bind(key)
+        .run()
 
     const r2file = await c.env.R2.get('files/' + key)
     if (!r2file) {
@@ -104,6 +106,8 @@ export async function handleAccessFile(c: HonoContext): Promise<Response> {
     headers.set('Content-Type', file.mime as string)
     if (c.req.query('dl')) {
         headers.set('Content-Disposition', `attachment; filename="${file.filename}"`)
+    } else {
+        headers.set('Content-Disposition', `inline; filename="${file.filename}"`)
     }
     headers.set('Cache-Control', 'public, max-age=604800, immutable')
 
@@ -125,6 +129,12 @@ export async function handleGetFile(c: HonoContext): Promise<Response> {
         .bind(key)
         .first()
     if (!file) {
+        return c.json({ error: 'Not Found' }, { status: 404 })
+    }
+
+    if (file.expire_at &&
+        new Date().getTime() > (file.expire_at as number)) {
+        await deleteFile(c.env.DB, c.env.R2, key)
         return c.json({ error: 'Not Found' }, { status: 404 })
     }
 
@@ -150,7 +160,10 @@ export async function handleGetFileAccess(c: HonoContext): Promise<Response> {
         .bind(key)
         .all()
 
-    return c.json(accesses, { status: 200 })
+    return c.json({ 
+        success: accesses.success,
+        data: accesses.results
+    }, { status: 200 })
 }
 
 export async function handleDeleteFile(c: HonoContext): Promise<Response> {
@@ -174,7 +187,7 @@ export async function handleListFiles(c: HonoContext): Promise<Response> {
     const page = (!isNaN(page_raw) && page_raw > 0) ? page_raw : 1
 
     const num_raw = parseInt(c.req.query('num') || '')
-    const num = (!isNaN(num_raw) && num_raw > 0 && num_raw < 100) ? num_raw : 20
+    const num = (!isNaN(num_raw) && num_raw > 0 && num_raw < 500) ? num_raw : 50
 
     const order_by_raw = c.req.query('order_by') || 'created_at'
     const order_by = ['created_at', 'filesize' , 'access_count'].includes(order_by_raw) ? order_by_raw : 'created_at'
@@ -189,7 +202,7 @@ export async function handleListFiles(c: HonoContext): Promise<Response> {
         params.push(`%${sfilename}%`)
     }
     if (mime) {
-        query += ' WHERE mime = ?'
+        query += sfilename? ' AND mime = ?' : ' WHERE mime = ?'
         params.push(mime)
     }
     query += ` ORDER BY ${order_by} ${order}`
@@ -201,5 +214,8 @@ export async function handleListFiles(c: HonoContext): Promise<Response> {
         .bind(...params)
         .all()
 
-    return c.json(files, { status: 200 })
+    return c.json({
+        success: files.success,
+        data: files.results
+    }, { status: 200 })
 }
