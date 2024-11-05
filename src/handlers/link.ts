@@ -92,7 +92,13 @@ export async function handleGetLink(c: HonoContext): Promise<Response> {
         return c.json({ error: 'Not Found' }, { status: 404 })
     }
 
-    return c.json(link, { status: 200 })
+    return c.json({
+        key: link.key,
+        destination: link.destination,
+        created_at: link.created_at,
+        expire_at: link.expire_at,
+        access_count: link.access_count
+    }, { status: 200 })
 }
 
 /**
