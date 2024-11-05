@@ -31,9 +31,9 @@ export async function deleteLink(db: D1Database, key: string): Promise<void> {
             .bind(key)
             .run()
     
-    await db.prepare('DELETE FROM link_access WHERE key = ?')
-            .bind(key)
-            .run()
+    // await db.prepare('DELETE FROM link_access WHERE key = ?')
+    //         .bind(key)
+    //         .run()
 }
 
 export async function handleAccessLink(c: HonoContext): Promise<Response> {

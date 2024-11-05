@@ -55,9 +55,9 @@ export async function deleteFile(db: D1Database, r2: R2Bucket, key: string): Pro
             .bind(key)
             .run()
     
-    await db.prepare('DELETE FROM file_access WHERE key = ?')
-            .bind(key)
-            .run()
+    // await db.prepare('DELETE FROM file_access WHERE key = ?')
+    //         .bind(key)
+    //         .run()
 
     await r2.delete('files/' + key)
 }
