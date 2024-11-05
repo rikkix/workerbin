@@ -185,7 +185,7 @@
             url: () => {
                 // get exp
                 const exp = document.querySelector("input[name=fileExp]:checked").value;
-                return "/api/upload?d=" + exp;
+                return "/api/files/create?d=" + exp;
             }, // Set the url
             thumbnailWidth: 80,
             thumbnailHeight: 80,
@@ -210,12 +210,10 @@
         myDropzone.on("success", function (file) {
             file.previewElement.querySelector(".delete").removeAttribute("disabled");
             file.previewElement.querySelector(".copy").removeAttribute("disabled");
-            file.previewElement.querySelector(".fileurl").value = file.xhr.responseText;
-            // parse response as url and set filekey
-            const url = new URL(file.xhr.responseText);
-            const key = url.pathname.split("/").pop();
 
-            file.previewElement.querySelector(".filekey").value = key;
+            const resp = JSON.parse(file.xhr.response);
+            file.previewElement.querySelector(".fileurl").value = resp.access_url;
+            file.previewElement.querySelector(".filekey").value = resp.key;
 
             file.previewElement.querySelector(".copy").addEventListener("click", function () {
                 var copyText = file.previewElement.querySelector(".fileurl");
@@ -227,7 +225,7 @@
 
         myDropzone.on("removedfile", function (file) {
             var xhr = new XMLHttpRequest();
-            xhr.open("POST", "/api/delete/"+file.previewElement.querySelector(".filekey").value, true);
+            xhr.open("DELETE", "/api/files/delete/" + file.previewElement.querySelector(".filekey").value, true);
             xhr.send();
         });
     </script>
