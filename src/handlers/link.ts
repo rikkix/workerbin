@@ -124,7 +124,10 @@ export async function handleGetLinkAccess(c: HonoContext): Promise<Response> {
         .bind(key)
         .all()
 
-    return c.json(accesses, { status: 200 })
+    return c.json({
+        success: accesses.success,
+        data: accesses.results
+    }, { status: 200 })
 }
 
 /**
@@ -172,7 +175,7 @@ export async function handleListLinks(c: HonoContext): Promise<Response> {
     const page = (!isNaN(page_raw) && page_raw > 0) ? page_raw : 1
 
     const num_raw = parseInt(c.req.query('num') || '')
-    const num = (!isNaN(num_raw) && num_raw > 0 && num_raw < 100) ? num_raw : 20
+    const num = (!isNaN(num_raw) && num_raw > 0 && num_raw < 500) ? num_raw : 50
 
     const order_by_raw = c.req.query('order_by') || 'created_at'
     const order_by = ['created_at', 'access_count'].includes(order_by_raw) ? order_by_raw : 'created_at'
@@ -196,5 +199,8 @@ export async function handleListLinks(c: HonoContext): Promise<Response> {
         .bind(...params)
         .all()
 
-    return c.json(links, { status: 200 })
+    return c.json({
+        success: links.success,
+        data: links.results
+    }, { status: 200 })
 }
