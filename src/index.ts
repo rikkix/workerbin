@@ -11,15 +11,15 @@ app.get('/f/:key', handleAccessFile)
 // For authorized access (optional, by using Cloudflare Access)
 // Accesses via these links will not be recorded.
 app.post('/api/links/create', handleCreateLink)
+app.get('/api/links/list', handleListLinks)
 app.get('/api/links/:key', handleGetLink)
 app.get('/api/links/:key/access', handleGetLinkAccess)
-app.get('/api/links/list', handleListLinks)
 app.delete('/api/links/delete/:key', handleDeleteLink)
 
 app.post('/api/files/create', handleCreateFile)
+app.get('/api/files/list', handleListFiles)
 app.get('/api/files/:key', handleGetFile)
 app.get('/api/files/:key/access', handleGetFileAccess)
-app.get('/api/files/list', handleListFiles)
 app.delete('/api/files/delete/:key', handleDeleteFile)
 
 export default {
