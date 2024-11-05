@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
 import { handleAccessLink, handleCreateLink, handleDeleteLink, handleGetLink, handleGetLinkAccess, handleListLinks} from './handlers/link'
 import { handleAccessFile, handleCreateFile, handleDeleteFile, handleGetFile, handleGetFileAccess, handleListFiles } from './handlers/file'
+import { handleSchedule } from './handlers/clean'
 const app = new Hono<{ Bindings: CloudflareBindings }>()
-
 
 // For public access. Accesses via these links will be recorded.
 app.get('/s/:key', handleAccessLink)
@@ -24,5 +24,7 @@ app.delete('/api/files/delete/:key', handleDeleteFile)
 
 export default {
   fetch: app.fetch,
-  // scheduled: async (batch, env) => { },
+  scheduled: async (req: ScheduledEvent, env: CloudflareBindings) => {
+    await handleSchedule(env)
+  }
 }
