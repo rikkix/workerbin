@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { handleAccessLink, handleCreateLink, handleDeleteLink, handleGetLink, handleGetLinkAccess, handleListLinks} from './handlers/link'
-import { handleAccessFile, handleCreateFile, handleDeleteFile, handleGetFile, handleGetFileAccess, handleListFiles } from './handlers/file'
+import { handleAccessFile, handleCreateFile, handleDeleteFile, handleExportFileAccess, handleExportFileList, handleGetFile, handleGetFileAccess, handleListFiles } from './handlers/file'
 import { handleSchedule } from './handlers/clean'
 const app = new Hono<{ Bindings: CloudflareBindings }>()
 
@@ -21,6 +21,9 @@ app.get('/api/files/list', handleListFiles)
 app.get('/api/files/:key', handleGetFile)
 app.get('/api/files/:key/access', handleGetFileAccess)
 app.delete('/api/files/delete/:key', handleDeleteFile)
+
+app.get('/api/export/files', handleExportFileList)
+app.get('/api/export/files/access', handleExportFileAccess)
 
 export default {
   fetch: app.fetch,

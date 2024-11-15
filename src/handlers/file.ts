@@ -1,5 +1,6 @@
 import { getMimeType } from "hono/utils/mime"
 import { genUniqueFileKey, getExpire, HonoContext } from "./common"
+import { stream } from "hono/streaming"
 
 export const FILE_KEY_LENGTH = 10
 
@@ -102,20 +103,16 @@ export async function handleAccessFile(c: HonoContext): Promise<Response> {
         return c.text('Internal Server Error', { status: 500 })
     }
 
-    const headers = new Headers()
-    headers.set('Content-Type', file.mime as string)
+    c.header('Content-Type', file.mime as string)
     if (c.req.query('dl')) {
-        headers.set('Content-Disposition', `attachment; filename="${file.filename}"`)
+        c.header('Content-Disposition', `attachment; filename="${file.filename}"`)
     } else {
-        headers.set('Content-Disposition', `inline; filename="${file.filename}"`)
+        c.header('Content-Disposition', `inline; filename="${file.filename}"`)
     }
-    headers.set('Cache-Control', 'public, max-age=604800, immutable')
+    c.header('Cache-Control', 'public, max-age=604800, immutable')
 
-
-    return c.newResponse(r2file.body, {
-        status: 200,
-        headers: headers
-    })
+    c.status(200)
+    return c.body(r2file.body)
 }
 
 export async function handleGetFile(c: HonoContext): Promise<Response> {
@@ -179,6 +176,11 @@ export async function handleDeleteFile(c: HonoContext): Promise<Response> {
 }
 
 export async function handleListFiles(c: HonoContext): Promise<Response> {
+    const before_raw = parseInt(c.req.query('before') || '')
+    const before = (!isNaN(before_raw) && before_raw > 0) ? before_raw : new Date().getTime()
+
+    const key = c.req.query('key') || null
+
     const sfilename = c.req.query('filename') || null
 
     const mime = c.req.query('mime') || null
@@ -190,32 +192,97 @@ export async function handleListFiles(c: HonoContext): Promise<Response> {
     const num = (!isNaN(num_raw) && num_raw > 0 && num_raw < 500) ? num_raw : 50
 
     const order_by_raw = c.req.query('order_by') || 'created_at'
-    const order_by = ['created_at', 'filesize' , 'access_count'].includes(order_by_raw) ? order_by_raw : 'created_at'
+    const order_by = ['created_at', 'expire_at', 'filesize' , 'access_count'].includes(order_by_raw) ? order_by_raw : 'created_at'
 
     const order_raw = c.req.query('order')?.toUpperCase() || 'DESC'
     const order = ['ASC', 'DESC'].includes(order_raw) ? order_raw : 'DESC'
 
-    let query = 'SELECT * FROM files'
+    // let query = 'SELECT * FROM files'
+
+    let condition_query = ''
     let params = []
+    condition_query += ' WHERE created_at < ?'
+    params.push(before)
+    if (key) {
+        condition_query += ' AND key LIKE ?'
+        params.push(`%${key}%`)
+    }
     if (sfilename) {
-        query += ' WHERE filename LIKE ?'
+        condition_query += ' AND filename LIKE ?'
         params.push(`%${sfilename}%`)
     }
     if (mime) {
-        query += sfilename? ' AND mime = ?' : ' WHERE mime = ?'
-        params.push(mime)
+        condition_query += ' AND mime LIKE ?'
+        params.push(`%${mime}%`)
     }
-    query += ` ORDER BY ${order_by} ${order}`
+
+    const query_count = `SELECT COUNT(*) as count FROM files ${condition_query}`
+    const count = await c.env.DB.prepare(query_count)
+        .bind(...params)
+        .first()
+    if (!count) {
+        return c.json({ error: 'Internal Server Error' }, { status: 500 })
+    }
+    const total = count.count as number
+
+    let query = `SELECT * FROM files ${condition_query} ORDER BY ${order_by} ${order}`
     query += ` LIMIT ? OFFSET ?`
     params.push(num)
     params.push((page - 1) * num)
-
     const files = await c.env.DB.prepare(query)
         .bind(...params)
         .all()
 
     return c.json({
+        total: total,
+        total_pages: Math.ceil(total / num),
+        remaining: total - (page * num),
+        remaining_pages: Math.ceil((total - (page * num)) / num),
         success: files.success,
         data: files.results
     }, { status: 200 })
+}
+
+export async function handleExportFileList(c: HonoContext): Promise<Response> {
+    const files = await c.env.DB.prepare('SELECT * FROM files').all()
+    if (!files || !files.success) {
+        return c.json({ error: 'Internal Server Error' }, { status: 500 })
+    }
+
+    if (c.req.query('format') === 'csv') {
+        c.header('Content-Type', 'text/csv')
+        c.header('Content-Disposition', 'attachment; filename="files.csv"')
+        return stream(c, async (w) => {
+            w.write('key,mime,filename,filesize,created_at,expire_at,access_count\n')
+            for (const file of files.results) {
+                w.write(`${file.key},${file.mime},${file.filename},${file.filesize},${file.created_at},${file.expire_at},${file.access_count}\n`)
+            }
+        })
+    }
+
+    c.header('Content-Type', 'application/json')
+    c.header('Content-Disposition', 'attachment; filename="files.json"')
+    return c.json(files.results, { status: 200 })
+}
+
+export async function handleExportFileAccess(c: HonoContext): Promise<Response> {
+    const accesses = await c.env.DB.prepare('SELECT * FROM file_access').all()
+    if (!accesses || !accesses.success) {
+        return c.json({ error: 'Internal Server Error' }, { status: 500 })
+    }
+
+    if (c.req.query('format') === 'csv') {
+        c.header('Content-Type', 'text/csv')
+        c.header('Content-Disposition', 'attachment; filename="file_access.csv"')
+        return stream(c, async (w) => {
+            w.write('key,ip,country,city,ua,referer,access_at\n')
+            for (const access of accesses.results) {
+                w.write(`${access.key},${access.ip},${access.country},${access.city},${access.ua},${access.referer},${access.access_at}\n`)
+            }
+        })
+    }
+
+    c.header('Content-Type', 'application/json')
+    c.header('Content-Disposition', 'attachment; filename="file_access.json"')
+    return c.json(accesses.results, { status: 200 })
 }
