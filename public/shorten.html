@@ -28,10 +28,10 @@
                         <a class="nav-link active" aria-current="page" href="/shorten">Shorten</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/list">List</a>
+                        <a class="nav-link" href="/files">Files</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/access">Access</a>
+                        <a class="nav-link" href="/links">Links</a>
                     </li>
             </div>
         </div>
@@ -111,60 +111,61 @@
                 </div>
             </div>
         </div>
+    </div>
 
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
 
-        <script>
-            document.getElementById('submit-shorten').addEventListener('click', async () => {
-                // disable the button
-                document.getElementById('submit-shorten').disabled = true;
+    <script>
+        document.getElementById('submit-shorten').addEventListener('click', async () => {
+            // disable the button
+            document.getElementById('submit-shorten').disabled = true;
 
-                const url = document.getElementById('urlInput').value;
-                const urlExp = document.querySelector('input[name="urlExp"]:checked').value;
-                const response = await fetch('/api/links/create?d='+urlExp, {
-                    method: 'POST',
-                    body: url
-                });
-                const data = await response.json();
-
-                // enable the button and clear the input
-                document.getElementById('submit-shorten').disabled = false;
-                document.getElementById('urlInput').value = '';
-
-                if (response.ok) {
-                    const shortenList = document.getElementById('shorten-list');
-                    const template = document.getElementById('template');
-                    const clone = template.cloneNode(true);
-                    clone.classList.remove('d-none');
-                    clone.id = '';
-                    const name = clone.querySelector('.name');
-                    const fileurl = clone.querySelector('.fileurl');
-                    const filekey = clone.querySelector('.filekey');
-                    const copy = clone.querySelector('.copy');
-                    const del = clone.querySelector('.delete');
-                    
-                    name.textContent = url;
-                    fileurl.value = data.access_url;
-                    filekey.value = data.key;
-                    copy.addEventListener('click', () => {
-                        fileurl.select();
-                        document.execCommand('copy');
-                    });
-                    del.addEventListener('click', async () => {
-                        const response = await fetch(`/api/links/delete/${data.key}`, {
-                            method: 'DELETE'
-                        });
-                        if (response.ok) {
-                            shortenList.removeChild(clone);
-                        }
-                    });
-                    shortenList.appendChild(clone);
-                }
+            const url = document.getElementById('urlInput').value;
+            const urlExp = document.querySelector('input[name="urlExp"]:checked').value;
+            const response = await fetch('/api/links/create?d=' + urlExp, {
+                method: 'POST',
+                body: url
             });
-        </script>
+            const data = await response.json();
+
+            // enable the button and clear the input
+            document.getElementById('submit-shorten').disabled = false;
+            document.getElementById('urlInput').value = '';
+
+            if (response.ok) {
+                const shortenList = document.getElementById('shorten-list');
+                const template = document.getElementById('template');
+                const clone = template.cloneNode(true);
+                clone.classList.remove('d-none');
+                clone.id = '';
+                const name = clone.querySelector('.name');
+                const fileurl = clone.querySelector('.fileurl');
+                const filekey = clone.querySelector('.filekey');
+                const copy = clone.querySelector('.copy');
+                const del = clone.querySelector('.delete');
+
+                name.textContent = url;
+                fileurl.value = data.access_url;
+                filekey.value = data.key;
+                copy.addEventListener('click', () => {
+                    fileurl.select();
+                    document.execCommand('copy');
+                });
+                del.addEventListener('click', async () => {
+                    const response = await fetch(`/api/links/delete/${data.key}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        shortenList.removeChild(clone);
+                    }
+                });
+                shortenList.appendChild(clone);
+            }
+        });
+    </script>
 
 </body>
 
